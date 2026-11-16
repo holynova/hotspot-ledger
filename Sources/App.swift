@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             instanceLock = Darwin.open(directory.appendingPathComponent("instance.lock").path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
             if instanceLock < 0 || flock(instanceLock, LOCK_EX | LOCK_NB) != 0 { NSApp.terminate(nil); return }
         }
+        if let url = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"), let icon = NSImage(contentsOf: url) { NSApp.applicationIconImage = icon }
         model = AppModel()
         let menu = NSMenu()
         let appItem = NSMenuItem(); menu.addItem(appItem)

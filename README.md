@@ -10,11 +10,11 @@ A local macOS hotspot usage monitor with per-app rankings, speed charts, usage a
 
 - [Cloudflare Demo](https://xiaosang.cc/hotspot-ledger/)
 - [GitHub Repo](https://github.com/holynova/hotspot-ledger)
-- [Mac 下载 / Download v0.3.2](https://github.com/holynova/hotspot-ledger/releases/tag/v0.3.2)
+- [Mac 下载 / Download v0.3.3](https://github.com/holynova/hotspot-ledger/releases/tag/v0.3.3)
 
 <img src="site/assets/qr.png" width="160" alt="访问产品介绍页 / Visit website">
 
-v0.3.2：Apple Silicon，macOS 14+；本地签名，未通过 Apple 公证，首次打开可能被系统拦截。解压后拖入“应用程序”。确认来源和校验值后，可在系统“隐私与安全性”中允许打开，或自行构建。
+v0.3.3：Apple Silicon，macOS 14+；本地签名，未通过 Apple 公证，首次打开可能被系统拦截。解压后拖入“应用程序”。确认来源和校验值后，可在系统“隐私与安全性”中允许打开，或自行构建。
 
 Apple Silicon, macOS 14+. Ad-hoc signed, not Apple-notarized. Gatekeeper may block the first launch. Verify the source and release checksum before allowing it in Privacy & Security, or build locally.
 
