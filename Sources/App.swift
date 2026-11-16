@@ -21,7 +21,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model = AppModel()
         let menu = NSMenu()
         let appItem = NSMenuItem(); menu.addItem(appItem)
-        let appMenu = NSMenu(); appMenu.addItem(withTitle: "关于热点账本", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let appMenu = NSMenu(); appMenu.addItem(withTitle: "关于热点账本", action: #selector(showAbout), keyEquivalent: "")
+        appMenu.items.first?.target = self
         appMenu.addItem(.separator()); appMenu.addItem(withTitle: "退出热点账本", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"); appItem.submenu = appMenu
         let editItem = NSMenuItem(); editItem.title = "编辑"; let editMenu = NSMenu(title: "编辑")
         editMenu.addItem(withTitle: "复制", action: #selector(NSText.copy(_:)), keyEquivalent: "c"); editMenu.addItem(withTitle: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v"); editMenu.addItem(withTitle: "全选", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"); editItem.submenu = editMenu; menu.addItem(editItem)
@@ -52,6 +53,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.status.button?.toolTip = "热点账本 · " + (self.model.network ?? "未连接 Wi-Fi")
         }
         showWindow()
+    }
+    @objc func showAbout() {
+        var options: [NSApplication.AboutPanelOptionKey: Any] = [:]
+        if let icon = NSImage(contentsOfFile: Bundle.main.bundlePath + "/Contents/Resources/AppIcon.icns") { options[.applicationIcon] = icon }
+        NSApp.orderFrontStandardAboutPanel(options: options)
     }
     @objc func showWindow() { window.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true) }
     @objc func toggleRecording() { model.toggle() }
