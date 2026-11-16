@@ -7,7 +7,7 @@
     "build": "bash scripts/build.sh",
     "dev": "python3 -m http.server 8771 --bind 127.0.0.1 --directory site",
     "deploy:check": "wrangler deploy --dry-run",
-    "deploy": "wrangler deploy"
+    "deploy": "bash scripts/deploy-site.sh"
   },
   "devDependencies": {
     "wrangler": "4.128.0"

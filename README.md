@@ -8,7 +8,7 @@ A local macOS hotspot usage monitor with per-app rankings, speed charts, usage a
 
 ## 下载与介绍 / Download & website
 
-- [Cloudflare Demo](https://hotspot-ledger.xiaosang.cc/)
+- [Cloudflare Demo](https://xiaosang.cc/hotspot-ledger/)
 - [GitHub Repo](https://github.com/holynova/hotspot-ledger)
 - [Mac 下载 / Download v0.3.2](https://github.com/holynova/hotspot-ledger/releases/tag/v0.3.2)
 
@@ -35,13 +35,13 @@ npm run dev
 ```bash
 npm ci
 npm run deploy:check
-npm run deploy
+npm run deploy -- /path/to/clean/portfolio-checkout
 ```
 
-Cloudflare Workers · Custom Domain: `hotspot-ledger.xiaosang.cc`
+Cloudflare Workers · Custom Domain: `xiaosang.cc/hotspot-ledger`
 
-源码与部署配置统一在 main，本地手动发布，无 Cloudflare 自动部署。安装包构建后运行 `bash scripts/package.sh`。
+源码统一在 main，介绍页复用作品集 master 的 xiaosang-portfolio Worker，位于 /hotspot-ledger/。本地手动发布。安装包构建后运行 `bash scripts/package.sh`。
 
-Source and deployment configuration share `main`. Deploy manually from the same commit. Run `bash scripts/package.sh` after building for the release archive.
+Source uses `main`; the website is copied to the portfolio `master` and served by its existing Worker. The account has reached its standalone Worker limit. Run `bash scripts/package.sh` after building for the release archive.
 
 [详细说明 / Detailed guide](docs/USER-GUIDE.md)
