@@ -1,0 +1,12 @@
+.build/
+dist/
+diagnostics/
+.DS_Store
+node_modules/
+.wrangler/
+.env*
+design/
+prototypes/
+docs/*
+!docs/USER-GUIDE.md
+release/
