@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="1200" height="420" role="img" aria-label="热点账本 Hotspot Ledger — macOS 热点流量记录：应用排行、速度曲线、用量提醒">
+  <title>热点账本 Hotspot Ledger</title>
+  <desc>macOS 热点流量记录工具：应用排行、速度曲线、用量提醒，数据只存本机。</desc>
+  <defs>
+    <radialGradient id="glow" cx="78%" cy="18%" r="65%">
+      <stop offset="0%" stop-color="#E4573D" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#E4573D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="420" rx="20" fill="#221B17"/>
+  <rect width="1200" height="420" rx="20" fill="url(#glow)"/>
+
+  <!-- faint wifi arcs, left background -->
+  <g fill="none" stroke="#E4573D" stroke-opacity="0.14" stroke-width="10" stroke-linecap="round">
+    <path d="M 118 330 A 150 150 0 0 1 418 330"/>
+    <path d="M 168 330 A 100 100 0 0 1 368 330"/>
+    <path d="M 218 330 A 50 50 0 0 1 318 330"/>
+  </g>
+  <circle cx="268" cy="330" r="10" fill="#E4573D" fill-opacity="0.14"/>
+
+  <!-- left copy -->
+  <text x="64" y="96" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" font-weight="600" letter-spacing="4" fill="#E8836E">macOS · SWIFT</text>
+  <text x="62" y="172" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="66" font-weight="700" fill="#FBF7F2">热点账本</text>
+  <text x="64" y="212" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="24" font-weight="600" letter-spacing="6" fill="#B8A99C">HOTSPOT LEDGER</text>
+  <text x="64" y="262" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="22" fill="#D8CFC6">热点流量记账本：应用排行、速度曲线、用量提醒</text>
+  <text x="64" y="296" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#9A8B7E">数据只存本机 · 零第三方依赖</text>
+
+  <!-- badges -->
+  <g font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="19" font-weight="600">
+    <rect x="64" y="326" width="92" height="36" rx="18" fill="#B23A24"/>
+    <text x="110" y="350" text-anchor="middle" fill="#FFFFFF">v0.3.5</text>
+    <rect x="168" y="326" width="150" height="36" rx="18" fill="#221B17" stroke="#6B5D52" stroke-width="1.5"/>
+    <text x="243" y="350" text-anchor="middle" fill="#D8CFC6">Apple Silicon</text>
+    <rect x="330" y="326" width="132" height="36" rx="18" fill="#221B17" stroke="#6B5D52" stroke-width="1.5"/>
+    <text x="396" y="350" text-anchor="middle" fill="#D8CFC6">macOS 14+</text>
+  </g>
+
+  <!-- right: dashboard card -->
+  <g>
+    <rect x="720" y="48" width="416" height="324" rx="16" fill="#F7F3EE"/>
+    <rect x="720" y="48" width="416" height="324" rx="16" fill="none" stroke="#E2D8CC" stroke-width="1"/>
+    <!-- card header -->
+    <g font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+      <path d="M 748 84 A 22 22 0 0 1 780 84" fill="none" stroke="#3A322C" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 754 90 A 14 14 0 0 1 774 90" fill="none" stroke="#3A322C" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="764" cy="96" r="3.5" fill="#3A322C"/>
+      <text x="792" y="100" font-size="22" font-weight="700" fill="#2B2520">桑苹果</text>
+      <circle cx="1062" cy="92" r="5" fill="#E4573D"/>
+      <text x="1074" y="99" font-size="19" fill="#6B5D52">记录中</text>
+      <!-- total -->
+      <text x="748" y="140" font-size="18" fill="#6B5D52">本次 Wi-Fi 用量</text>
+      <text x="748" y="182" font-size="40" font-weight="700" fill="#2B2520">125.2 <tspan font-size="20" font-weight="600">MB</tspan></text>
+      <text x="1012" y="160" font-size="18" fill="#6B5D52" text-anchor="end">下载 94.7 MB</text>
+      <text x="1012" y="184" font-size="18" fill="#6B5D52" text-anchor="end">上传 30.5 MB</text>
+    </g>
+    <!-- speed bars -->
+    <g fill="#E4573D">
+      <rect x="748" y="212" width="7" height="10" rx="2"/>
+      <rect x="760" y="206" width="7" height="16" rx="2"/>
+      <rect x="772" y="216" width="7" height="6" rx="2"/>
+      <rect x="784" y="198" width="7" height="24" rx="2"/>
+      <rect x="796" y="214" width="7" height="8" rx="2"/>
+      <rect x="808" y="208" width="7" height="14" rx="2"/>
+      <rect x="820" y="218" width="7" height="4" rx="2"/>
+      <rect x="832" y="192" width="7" height="30" rx="2"/>
+      <rect x="844" y="210" width="7" height="12" rx="2"/>
+      <rect x="856" y="216" width="7" height="6" rx="2"/>
+      <rect x="868" y="204" width="7" height="18" rx="2"/>
+      <rect x="880" y="214" width="7" height="8" rx="2"/>
+      <rect x="892" y="200" width="7" height="22" rx="2"/>
+      <rect x="904" y="216" width="7" height="6" rx="2"/>
+      <rect x="916" y="210" width="7" height="12" rx="2"/>
+      <rect x="928" y="196" width="7" height="26" rx="2"/>
+      <rect x="940" y="214" width="7" height="8" rx="2"/>
+      <rect x="952" y="208" width="7" height="14" rx="2"/>
+      <rect x="964" y="218" width="7" height="4" rx="2"/>
+      <rect x="976" y="202" width="7" height="20" rx="2"/>
+      <rect x="988" y="212" width="7" height="10" rx="2"/>
+      <rect x="1000" y="216" width="7" height="6" rx="2"/>
+    </g>
+    <line x1="748" y1="232" x2="1108" y2="232" stroke="#E2D8CC" stroke-width="1"/>
+    <!-- ranking rows -->
+    <g font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="19" fill="#2B2520">
+      <text x="748" y="264" font-weight="600">ChatGPT</text>
+      <text x="1108" y="264" text-anchor="end">56.3 MB</text>
+      <rect x="748" y="274" width="360" height="6" rx="3" fill="#E8DFD5"/>
+      <rect x="748" y="274" width="240" height="6" rx="3" fill="#E4573D"/>
+      <text x="748" y="310" font-weight="600">Safari</text>
+      <text x="1108" y="310" text-anchor="end">18.4 MB</text>
+      <rect x="748" y="320" width="360" height="6" rx="3" fill="#E8DFD5"/>
+      <rect x="748" y="320" width="78" height="6" rx="3" fill="#E4573D"/>
+      <text x="748" y="356" font-weight="600">Terminal</text>
+      <text x="1108" y="356" text-anchor="end">17.1 MB</text>
+    </g>
+  </g>
+</svg>
