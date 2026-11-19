@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var cancellable: AnyCancellable?
     var instanceLock: Int32 = -1
     var dashboard: WebDashboard!
+    var languageObserver: NSObjectProtocol?
     func applicationDidFinishLaunching(_ notification: Notification) {
         if Bundle.main.bundleIdentifier?.hasSuffix(".preview") != true && !CommandLine.arguments.contains("--preview") {
             let directory = LedgerStore().directory
@@ -34,7 +35,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
         window.standardWindowButton(.zoomButton)?.isHidden = true
         dashboard = WebDashboard(model: model)
-        window.contentView = dashboard.view
+        let menuBackground = NSVisualEffectView()
+        menuBackground.material = .menu
+        menuBackground.blendingMode = .behindWindow
+        menuBackground.state = .followsWindowActiveState
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.contentView = menuBackground
+        dashboard.view.frame = menuBackground.bounds
+        dashboard.view.autoresizingMask = [.width, .height]
+        menuBackground.addSubview(dashboard.view)
         window.setFrame(NSRect(x: 0, y: 0, width: 384, height: 614), display: true)
         // WKWebView uses flipped coordinates; anchor the drag strip to the visual top.
         // A numeric y offset can otherwise intercept the footer's mouse events.
@@ -49,7 +59,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ])
         window.center()
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        status.button?.image = NSImage(systemSymbolName: "wifi", accessibilityDescription: "热点账本")
+        status.button?.image = makeStatusIcon()
         status.button?.imagePosition = .imageLeading
         let tray = NSMenu()
         let open = NSMenuItem(title: "打开热点账本", action: #selector(showWindow), keyEquivalent: ""); open.target = self; tray.addItem(open)
@@ -58,10 +68,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         status.menu = tray
         cancellable = model.$sessions.receive(on: RunLoop.main).sink { [weak self] _ in
             guard let self else { return }
-            self.status.button?.title = " " + (self.model.active.map { formatBytes($0.usage.total) } ?? "待机")
-            self.status.button?.toolTip = "热点账本 · " + (self.model.network ?? "未连接 Wi-Fi")
+            self.status.button?.title = " " + (self.model.active.map { formatBytes($0.usage.total) } ?? L10n.text("待机"))
+            self.status.button?.toolTip = L10n.text("热点账本") + " — " + (self.model.network ?? "未连接 Wi-Fi")
         }
+        refreshLanguage()
+        languageObserver = NotificationCenter.default.addObserver(forName: L10n.changed, object: nil, queue: .main) { [weak self] _ in self?.refreshLanguage() }
         showWindow()
+    }
+    private func refreshLanguage() {
+        window.title = L10n.text("热点账本")
+        let appMenu = NSApp.mainMenu?.items.first?.submenu
+        appMenu?.items.first?.title = L10n.text("关于热点账本")
+        appMenu?.items.last?.title = L10n.text("退出热点账本")
+        if let edit = NSApp.mainMenu?.items.dropFirst().first {
+            edit.title = L10n.text("编辑")
+            for (item, title) in zip(edit.submenu?.items ?? [], ["复制", "粘贴", "全选"]) { item.title = L10n.text(title) }
+        }
+        if let items = status.menu?.items, items.count >= 4 {
+            items[0].title = L10n.text("打开热点账本")
+            items[1].title = L10n.text("暂停 / 恢复记录")
+            items[3].title = L10n.text("退出")
+        }
+        status.button?.image?.accessibilityDescription = L10n.text("热点账本")
+    }
+    // Original histogram mark, deliberately unlike the system Wi-Fi glyph.
+    // Template rendering supplies the correct menu-bar tint in either appearance.
+    private func makeStatusIcon() -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
+            NSColor.black.setFill()
+            for (x, height): (CGFloat, CGFloat) in [(2, 10), (7.5, 5), (13, 12)] {
+                NSBezierPath(roundedRect: NSRect(x: x, y: 4, width: 3, height: height),
+                             xRadius: 1, yRadius: 1).fill()
+            }
+            NSBezierPath(roundedRect: NSRect(x: 2, y: 1, width: 14, height: 1.5),
+                         xRadius: 0.75, yRadius: 0.75).fill()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "热点账本流量统计"
+        return image
     }
     @objc func showAbout() {
         var options: [NSApplication.AboutPanelOptionKey: Any] = [:]

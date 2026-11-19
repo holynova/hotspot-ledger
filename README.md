@@ -7,12 +7,15 @@
 <p align="center">
   <a href="https://xiaosang.cc/hotspot-ledger/">🌐 产品介绍页</a>
   ·
-  <a href="https://github.com/holynova/hotspot-ledger/releases/tag/v0.3.5">⬇ 下载 v0.3.5（Mac）</a>
+  <a href="https://github.com/holynova/hotspot-ledger/releases/tag/v0.4.0">⬇ 下载 v0.4.0（Mac）</a>
   ·
   <a href="https://github.com/holynova/hotspot-ledger">GitHub 仓库</a>
 </p>
 
 热点账本是一款本机运行的 macOS 热点流量记录工具：连上手机热点后，它按应用排行记录流量、画出速度曲线，到达用量阈值时提醒你，必要时还可手动或自动关闭 Wi-Fi。数据只存本机，不上传。
+
+
+v0.4.0 新增按天历史、Git 活动来源追踪、中英文切换和跟随系统的原生菜单外观。
 
 ## 截图
 
@@ -41,7 +44,7 @@
 
 ## 下载与安装
 
-下载 [v0.3.5](https://github.com/holynova/hotspot-ledger/releases/tag/v0.3.5)，解压后拖入「应用程序」。要求 Apple Silicon、macOS 14+。
+下载 [v0.4.0](https://github.com/holynova/hotspot-ledger/releases/tag/v0.4.0)，解压后拖入「应用程序」。要求 Apple Silicon、macOS 14+。
 
 > 本地 ad-hoc 签名，未通过 Apple 公证，首次打开可能被系统拦截。确认来源与校验值后，可在系统「隐私与安全性」中允许打开，或自行构建。
 

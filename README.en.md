@@ -7,12 +7,15 @@
 <p align="center">
   <a href="https://xiaosang.cc/hotspot-ledger/">🌐 Product Page</a>
   ·
-  <a href="https://github.com/holynova/hotspot-ledger/releases/tag/v0.3.5">⬇ Download v0.3.5 (Mac)</a>
+  <a href="https://github.com/holynova/hotspot-ledger/releases/tag/v0.4.0">⬇ Download v0.4.0 (Mac)</a>
   ·
   <a href="https://github.com/holynova/hotspot-ledger">GitHub Repository</a>
 </p>
 
 Hotspot Ledger is a local macOS app that tracks how much data your Mac uses over a phone hotspot. Connect to a hotspot and it ranks apps by traffic, charts your speed, alerts you at usage thresholds, and can disconnect Wi-Fi manually or automatically. All data stays on your machine — nothing is uploaded.
+
+
+Version 0.4.0 adds daily history, Git activity attribution, Chinese and English, and a native appearance that follows macOS.
 
 ## Screenshots
 
@@ -41,7 +44,7 @@ Hotspot Ledger is a local macOS app that tracks how much data your Mac uses over
 
 ## Download & Install
 
-Download [v0.3.5](https://github.com/holynova/hotspot-ledger/releases/tag/v0.3.5), unzip, and drag into Applications. Requires Apple Silicon, macOS 14+.
+Download [v0.4.0](https://github.com/holynova/hotspot-ledger/releases/tag/v0.4.0), unzip, and drag into Applications. Requires Apple Silicon, macOS 14+.
 
 > Ad-hoc signed locally, not Apple-notarized — the system may block the first launch. After verifying the source and checksum, allow it in System Settings → Privacy & Security, or build from source.
 

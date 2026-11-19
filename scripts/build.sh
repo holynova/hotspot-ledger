@@ -16,14 +16,19 @@ PY
   if [[ -d /Library/Developer/CommandLineTools/SDKs/MacOSX14.5.sdk ]]; then SDK=/Library/Developer/CommandLineTools/SDKs/MacOSX14.5.sdk; fi
 fi
 FLAGS+=(-sdk "$SDK" -target arm64-apple-macosx14.0)
+if [[ "${1:-}" == provenance-test ]]; then
+  swiftc "${FLAGS[@]}" "$ROOT/Sources/Core.swift" "$ROOT/Sources/Localization.swift" "$ROOT/Sources/Sampler.swift" "$ROOT/Sources/Provenance.swift" "$ROOT/Tests/ProvenanceTests.swift" -o "$BUILD/provenance-tests"
+  "$BUILD/provenance-tests"
+  exit
+fi
 if [[ "${1:-}" == test ]]; then
-  swiftc "${FLAGS[@]}" "$ROOT/Sources/Core.swift" "$ROOT/Tests/CoreTests.swift" -o "$BUILD/core-tests"
+  swiftc "${FLAGS[@]}" "$ROOT/Sources/Core.swift" "$ROOT/Sources/Localization.swift" "$ROOT/Tests/CoreTests.swift" -o "$BUILD/core-tests"
   "$BUILD/core-tests"
   exit
 fi
 APP="$ROOT/dist/热点账本.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-swiftc "${FLAGS[@]}" -O "$ROOT/Sources/Core.swift" "$ROOT/Sources/Sampler.swift" "$ROOT/Sources/Store.swift" "$ROOT/Sources/Model.swift" "$ROOT/Sources/WebDashboard.swift" "$ROOT/Sources/App.swift" -o "$APP/Contents/MacOS/HotspotLedger"
+swiftc "${FLAGS[@]}" -O "$ROOT/Sources/Core.swift" "$ROOT/Sources/Localization.swift" "$ROOT/Sources/Sampler.swift" "$ROOT/Sources/Provenance.swift" "$ROOT/Sources/Store.swift" "$ROOT/Sources/Model.swift" "$ROOT/Sources/WebDashboard.swift" "$ROOT/Sources/App.swift" -o "$APP/Contents/MacOS/HotspotLedger"
 cp "$ROOT/Resources/dashboard.html" "$APP/Contents/Resources/dashboard.html"
 ICONSET="$BUILD/AppIcon.iconset"
 mkdir -p "$ICONSET"
@@ -43,8 +48,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleExecutable</key><string>HotspotLedger</string>
 <key>CFBundleIconFile</key><string>AppIcon.icns</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.3.5</string>
-<key>CFBundleVersion</key><string>8</string>
+<key>CFBundleShortVersionString</key><string>0.4.0</string>
+<key>CFBundleVersion</key><string>10</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSLocationUsageDescription</key><string>读取 Wi-Fi 名称以识别你标记的计费网络，不保存地理位置。</string>

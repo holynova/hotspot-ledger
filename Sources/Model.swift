@@ -130,9 +130,9 @@ final class AppModel: NSObject, ObservableObject, UNUserNotificationCenterDelega
         }
     }
     private func deliver(_ event: AlertEvent) {
-        alert = event.title + "：" + event.message
+        alert = L10n.text(event.title) + L10n.choose("：", ": ") + L10n.text(event.message)
         guard !preview else { return }
-        let content = UNMutableNotificationContent(); content.title = event.title; content.body = event.message; content.sound = .default
+        let content = UNMutableNotificationContent(); content.title = L10n.text(event.title); content.body = L10n.text(event.message); content.sound = .default
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
     }

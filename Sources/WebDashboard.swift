@@ -51,11 +51,25 @@ final class WebDashboard: NSObject, WKScriptMessageHandler, WKNavigationDelegate
     }
     func rows(_ values: [String: ProcessUsage], kind: String) -> [[String: Any]] {
         groupedProcesses(Array(values.values)).map { row in
-            let count = values.values.filter { processGroupKey($0) == row.id }.count
+            let members = values.values.filter { processGroupKey($0) == row.id }
+            let count = members.count
+            let origins: [[String: Any]] = members.sorted { $0.usage.total > $1.usage.total }.map { member in
+                var data: [String: Any] = ["id": member.id, "pid": Int(member.pid), "down": member.usage.down, "up": member.usage.up]
+                if let o = member.origin {
+                    data["capturedAt"] = o.capturedAt.timeIntervalSince1970 * 1000
+                    data["cwd"] = o.workingDirectory ?? ""
+                    data["repository"] = o.repository ?? ""
+                    data["remote"] = o.remote ?? ""
+                    data["transferRemote"] = o.transferRemote ?? ""
+                    data["operation"] = o.operation ?? ""
+                    data["ancestors"] = o.ancestors.map { ["pid": Int($0.pid), "name": $0.name, "path": $0.executable] as [String: Any] }
+                }
+                return data
+            }
             return ["id": row.id, "name": row.name, "pid": Int(row.pid), "path": row.executable,
                     "down": row.usage.down, "up": row.usage.up, "icon": icon(row), "proxy": row.proxy,
                     "sub": model.preview && row.name == "node" ? "wrangler deploy" : row.proxy ? "代理转发" : count > 1 ? "\(count) 个进程" : "进程 \(row.pid)",
-                    "rate": rates[kind+row.id] ?? 0]
+                    "rate": rates[kind+row.id] ?? 0, "origins": origins, "processCount": Set(members.map { "\($0.pid)@\($0.startedAt ?? "legacy")" }).count]
         }
     }
     func publish() {
@@ -75,22 +89,26 @@ final class WebDashboard: NSObject, WKScriptMessageHandler, WKNavigationDelegate
             previous = next; previousDate = date; previousSession = selected?.id
         }
         let usage = selected?.usage ?? Usage()
+        let mode = UserDefaults.standard.string(forKey: "appearance") ?? "system"
+        let appearance: NSAppearance? = mode == "system" ? nil : NSAppearance(named: mode == "dark" ? .darkAqua : .aqua)
+        if view.window?.appearance?.name != appearance?.name { view.window?.appearance = appearance }
+        let dark = view.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         let payload: [String: Any] = [
             "network": model.network ?? "", "recording": model.active != nil, "enabled": model.preferences.enabled,
             "marked": model.network.map { model.preferences.networks.contains($0) } ?? false,
-            "preview": model.preview, "wifiOff": model.wifiIsOff, "busy": model.disconnectBusy,
+            "language": L10n.language, "preview": model.preview, "wifiOff": model.wifiIsOff, "busy": model.disconnectBusy,
             "current": selected?.id == model.active?.id && model.active != nil,
             "selectedID": model.selectedID ?? "", "down": usage.down, "up": usage.up,
             "unobservedSeconds": selected?.unobservedSeconds ?? 0, "resumeCount": selected?.resumeCount ?? 0,
             "started": (selected?.started.timeIntervalSince1970 ?? 0)*1000,
             "ended": (selected?.ended?.timeIntervalSince1970 ?? selected?.lastSample.timeIntervalSince1970 ?? 0)*1000,
-            "issue": model.storageIssue ?? model.issue ?? "", "alert": model.alert ?? "", "connection": model.connectionMessage ?? "",
-            "details": model.details, "notice": model.notificationStatus,
-            "theme": UserDefaults.standard.string(forKey: "appearance") ?? "light",
+            "issue": L10n.text(model.storageIssue ?? model.issue ?? ""), "alert": model.alert ?? "", "connection": L10n.text(model.connectionMessage ?? ""),
+            "details": model.details, "notice": L10n.text(model.notificationStatus),
+            "theme": dark ? "dark" : "light", "appearanceMode": mode, "nativeMenu": true,
             "apps": rows(selected?.activityApps ?? [:], kind: "apps"), "outlet": rows(selected?.wifiApps ?? [:], kind: "outlet"),
             "points": (selected?.points ?? []).map { ["date": $0.date.timeIntervalSince1970*1000, "down": $0.down, "up": $0.up] },
             "preferences": ["networks": model.preferences.networks, "limit": model.preferences.limitMB, "burst": model.preferences.burstMB, "automatic": model.preferences.autoDisconnect == true, "disconnect": model.preferences.disconnectMB ?? 1000] as [String: Any],
-            "history": model.sessions.reversed().map { ["id": $0.id, "network": $0.network, "date": $0.started.timeIntervalSince1970*1000, "total": $0.usage.total, "reason": $0.endReason ?? "记录中"] as [String: Any] }
+            "history": model.sessions.reversed().map { ["id": $0.id, "network": $0.network, "date": $0.started.timeIntervalSince1970*1000, "total": $0.usage.total, "days": $0.recordedDays.mapValues { ["down": $0.down, "up": $0.up] }, "reason": $0.endReason ?? "记录中"] as [String: Any] }
         ]
         guard let encoded = try? JSONSerialization.data(withJSONObject: payload), let json = String(data: encoded, encoding: .utf8) else { return }
         view.evaluateJavaScript("window.receive(\(json))") { _, error in
@@ -108,8 +126,10 @@ final class WebDashboard: NSObject, WKScriptMessageHandler, WKNavigationDelegate
         case "enable": model.enableWiFi()
         case "dismissAlert": model.alert = nil
         case "notify": model.requestNotifications()
+        case "language":
+            if let value = body["value"] as? String { L10n.set(value) }
         case "theme":
-            if let theme = body["value"] as? String, ["light", "dark"].contains(theme) { UserDefaults.standard.set(theme, forKey: "appearance") }
+            if let theme = body["value"] as? String, ["system", "light", "dark"].contains(theme) { UserDefaults.standard.set(theme, forKey: "appearance") }
         case "select": model.selectedID = (body["id"] as? String).flatMap { $0.isEmpty ? nil : $0 }
         case "inspect":
             let source = body["scope"] as? String == "outlet" ? model.selected?.wifiApps : model.selected?.activityApps

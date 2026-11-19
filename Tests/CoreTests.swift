@@ -108,6 +108,48 @@ import Foundation
     resumeSource.ledger.sessions[0].endReason = "手动关闭 Wi-Fi"
     let explicitlyEnded = LedgerEngine(ledger: resumeSource.ledger); explicitlyEnded.ingest(sample(120, "桑苹果", 90_000_000))
     check(explicitlyEnded.active?.id != resumeID, "Explicit disconnect stays a session boundary")
+
+    let legacyProcess = try JSONDecoder().decode(ProcessUsage.self, from: Data("{\"id\":\"git.1\",\"name\":\"git\",\"pid\":1,\"executable\":\"/usr/bin/git\",\"usage\":{\"down\":10,\"up\":0}}".utf8))
+    check(legacyProcess.origin == nil && legacyProcess.startedAt == nil, "Legacy process records decode without invented attribution")
+    check(sanitizedRemote("https://user:secret@github.com/owner/repo.git?token=hidden#fragment") == "github.com/owner/repo.git", "Remote strips credentials, query and fragment")
+    check(sanitizedRemote("git@github.com:owner/repo.git?token=hidden") == "github.com/owner/repo.git", "SSH remote sanitization")
+    check(sanitizedRemote("/tmp/local-repo") == nil, "Local path is not misreported as a remote")
+    let origin = ProcessOrigin(capturedAt: t, workingDirectory: "/tmp/repo", repository: "/tmp/repo", remote: "github.com/owner/repo", operation: "fetch", ancestors: [ProcessAncestor(pid: 7, name: "Editor", executable: "/Applications/Editor.app/Contents/MacOS/Editor")])
+    var attributed = ProcessUsage(id: "git.123", name: "git-remote-http", pid: 123, executable: "/usr/libexec/git-remote-http", usage: Usage(down: 100), startedAt: "10.1", origin: origin)
+    let provenanceEngine = LedgerEngine(); provenanceEngine.ledger.preferences.networks = ["桑苹果"]
+    provenanceEngine.ingest(sample(0, "桑苹果", 0, [attributed.id: attributed]))
+    attributed.usage.down = 150
+    provenanceEngine.ingest(sample(2, "桑苹果", 50, [attributed.id: attributed]))
+    check(provenanceEngine.active?.activityApps.values.first?.origin == origin, "Origin retained with sampled byte delta")
+    attributed.startedAt = "20.1"; attributed.usage.down = 9000
+    provenanceEngine.ingest(sample(4, "桑苹果", 100, [attributed.id: attributed]))
+    check(provenanceEngine.active?.activityApps.values.reduce(0, {$0+$1.usage.total}) == 50, "PID reuse does not charge unrelated lifetime bytes")
+    attributed.usage.down = 9030
+    provenanceEngine.ingest(sample(6, "桑苹果", 130, [attributed.id: attributed]))
+    check(provenanceEngine.active?.activityApps.count == 2, "Reused PID gets a distinct retained record")
+    var changedOrigin = origin; changedOrigin.repository = "/tmp/other"; changedOrigin.workingDirectory = "/tmp/other"
+    attributed.origin = changedOrigin; attributed.usage.down = 9040
+    provenanceEngine.ingest(sample(8, "桑苹果", 140, [attributed.id: attributed]))
+    check(provenanceEngine.active?.activityApps.count == 3, "Changed provenance segments usage without rewriting older sources")
+    let persistedOrigins = try JSONDecoder().decode(Ledger.self, from: JSONEncoder().encode(provenanceEngine.ledger))
+    check(persistedOrigins.sessions.last?.activityApps.count == 3 && persistedOrigins.sessions.last?.activityApps.values.contains(where: {$0.origin?.repository == "/tmp/repo"}) == true, "Origin survives JSON round trip and process exit")
+    check(groupedProcesses(Array(provenanceEngine.active!.activityApps.values)).first?.usage.total == 90, "Source segments aggregate exactly once")
+    let midnight = Calendar.current.startOfDay(for: Date())
+    let offset = midnight.timeIntervalSince(t)
+    let across = LedgerEngine()
+    across.ledger.preferences.networks = ["桑苹果"]
+    across.ingest(sample(offset - 4, "桑苹果", 100))
+    across.ingest(sample(offset - 2, "桑苹果", 145))
+    across.ingest(sample(offset + 1, "桑苹果", 175))
+    let history = try JSONDecoder().decode(Session.self, from: JSONEncoder().encode(across.active!))
+    check(history.recordedDays[Session.dayKey(midnight)]?.total == 30 && history.recordedDays.values.map({ $0.total }).sorted() == [30, 45], "Midnight samples persist in separate local days")
+    var legacySession = history
+    legacySession.daily = nil
+    check(legacySession.recordedDays.isEmpty && legacySession.usage.total == 75, "Legacy multi-day totals stay unallocated")
+    let originalLanguage = UserDefaults.standard.string(forKey: "language")
+    L10n.set("en"); check(L10n.choose("设置", "Settings") == "Settings" && L10n.text("关于热点账本") == "About Hotspot Ledger", "Native UI localization resolves supported labels")
+    L10n.set("fr"); check(L10n.language == "en", "Unsupported language cannot overwrite saved choice")
+    if let originalLanguage { UserDefaults.standard.set(originalLanguage, forKey: "language") } else { UserDefaults.standard.removeObject(forKey: "language") }
     print("\(passed) tests passed")
  }
 }

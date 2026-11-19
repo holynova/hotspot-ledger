@@ -11,12 +11,44 @@ struct Usage: Codable, Equatable {
               up: up >= old.up ? up - old.up : 0)
     }
 }
+struct ProcessAncestor: Codable, Equatable {
+    var pid: Int32
+    var name: String
+    var executable: String
+}
+struct ProcessOrigin: Codable, Equatable {
+    var capturedAt: Date
+    var workingDirectory: String?
+    var repository: String?
+    var remote: String?
+    var operation: String?
+    var ancestors: [ProcessAncestor]
+    var transferRemote: String? = nil
+}
+// Only retain the host and repository path. Credentials, query tokens and fragments never persist.
+func sanitizedRemote(_ raw: String) -> String? {
+    let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    if value.contains("://"), let url = URLComponents(string: value),
+       ["http", "https", "ssh", "git"].contains(url.scheme?.lowercased() ?? ""), let host = url.host {
+        let path = url.percentEncodedPath
+        guard !host.isEmpty, !path.isEmpty else { return nil }
+        return host + path
+    }
+    if let colon = value.firstIndex(of: ":"), !value.hasPrefix("/"), !value.contains(" ") {
+        let host = value[..<colon].split(separator: "@").last.map(String.init) ?? ""
+        let path = value[value.index(after: colon)...].split(whereSeparator: { $0 == "?" || $0 == "#" }).first.map(String.init) ?? ""
+        if !host.isEmpty && !path.isEmpty { return host + "/" + path }
+    }
+    return nil
+}
 struct ProcessUsage: Codable, Identifiable {
     var id: String
     var name: String
     var pid: Int32
     var executable: String
     var usage: Usage
+    var startedAt: String? = nil
+    var origin: ProcessOrigin? = nil
     var proxy: Bool {
         let n = (name + " " + executable).lowercased()
         return ["mihomo", "clash", "surge", "sing-box"].contains { n.contains($0) }
@@ -43,6 +75,17 @@ struct Session: Codable, Identifiable {
     var incompleteSamples = 0
     var cumulativeAlerted = false
     var disconnectAttempted: Bool? = false
+    // Attribute an interval to the local calendar day of its closing sample.
+    static func dayKey(_ date: Date) -> String {
+        let parts = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year!, parts.month!, parts.day!)
+    }
+    var daily: [String: Usage]?
+    var recordedDays: [String: Usage] {
+        if let daily { return daily }
+        let day = Self.dayKey(started)
+        return day == Self.dayKey(lastSample) ? [day: usage] : [:]
+    }
     var points: [RatePoint]? = []
     var unobservedSeconds: Double? = 0
     var resumeCount: Int? = 0
@@ -156,12 +199,15 @@ final class LedgerEngine {
         guard let current, let old else { return }
         for (id, value) in current {
             // Newly observed processes start at a baseline; never import lifetime counters.
-            guard let prior = old[id], prior.executable == value.executable else { continue }
+            guard let prior = old[id], prior.executable == value.executable, prior.startedAt == value.startedAt else { continue }
             let increment = value.usage.delta(from: prior.usage)
             guard increment.total > 0 else { continue }
-            var record = totals[id] ?? ProcessUsage(id: id, name: value.name, pid: value.pid, executable: value.executable, usage: Usage())
+            // New origin segments never retroactively assign earlier unknown bytes.
+            let signature = originKey(value.origin)
+            let recordID = value.startedAt.map { id + "@" + $0 + "#" + signature } ?? id
+            var record = totals[recordID] ?? ProcessUsage(id: recordID, name: value.name, pid: value.pid, executable: value.executable, usage: Usage(), startedAt: value.startedAt, origin: value.origin)
             record.usage = record.usage + increment
-            totals[id] = record
+            totals[recordID] = record
         }
     }
     @discardableResult func ingest(_ sample: Sample) -> [AlertEvent] {
@@ -179,6 +225,7 @@ final class LedgerEngine {
                 ledger.sessions[i].unobservedSeconds = (ledger.sessions[i].unobservedSeconds ?? 0) + sample.date.timeIntervalSince(ledger.sessions[i].lastSample)
                 ledger.sessions[i].resumeCount = (ledger.sessions[i].resumeCount ?? 0) + 1
                 ledger.sessions[i].ended = nil; ledger.sessions[i].endReason = nil
+                ledger.sessions[i].daily = ledger.sessions[i].recordedDays
                 ledger.sessions[i].lastSample = sample.date
                 // Keep totals and attribution; restart rates without bridging the unobserved gap.
                 ledger.sessions[i].points = []
@@ -196,6 +243,10 @@ final class LedgerEngine {
         var alerts: [AlertEvent] = []
         if let prior = previous, let before = prior.counts, let after = sample.counts {
             let delta = after.delta(from: before)
+            var days = ledger.sessions[i].recordedDays
+            let day = Session.dayKey(sample.date)
+            days[day] = (days[day] ?? Usage()) + delta
+            ledger.sessions[i].daily = days
             ledger.sessions[i].usage = ledger.sessions[i].usage + delta
             add(sample.wifi, prior.wifi, to: &ledger.sessions[i].wifiApps)
             add(sample.activity, prior.activity, to: &ledger.sessions[i].activityApps)
@@ -210,11 +261,11 @@ final class LedgerEngine {
             let limit = ledger.preferences.limitMB * 1_000_000
             if limit > 0 && ledger.sessions[i].usage.total >= limit && !ledger.sessions[i].cumulativeAlerted {
                 ledger.sessions[i].cumulativeAlerted = true
-                alerts.append(AlertEvent(title: "热点用量提醒", message: "\(network)：本次已用 \(formatBytes(ledger.sessions[i].usage.total))"))
+                alerts.append(AlertEvent(title: "热点用量提醒", message: L10n.choose("\(network)：本次已用 \(formatBytes(ledger.sessions[i].usage.total))", "\(network): \(formatBytes(ledger.sessions[i].usage.total)) used this session")))
             }
             if ledger.preferences.burstMB > 0 && recent.total >= ledger.preferences.burstMB * 1_000_000 && sample.date.timeIntervalSince(lastBurst) > 60 {
                 lastBurst = sample.date
-                alerts.append(AlertEvent(title: "短时间大量传输", message: "最近最多 60 秒已传输 \(formatBytes(recent.total))，请检查进程排行。"))
+                alerts.append(AlertEvent(title: "短时间大量传输", message: L10n.choose("最近最多 60 秒已传输 \(formatBytes(recent.total))，请检查进程排行。", "\(formatBytes(recent.total)) transferred in the last 60 seconds or less. Check app activity.")))
             }
         }
         ledger.sessions[i].lastSample = sample.date
@@ -240,4 +291,10 @@ func groupedProcesses(_ rows: [ProcessUsage]) -> [ProcessUsage] {
         var row = values.max { $0.usage.total < $1.usage.total }!
         row.id = key; row.usage = values.reduce(Usage()) { $0 + $1.usage }; return row
     }.sorted { $0.usage.total > $1.usage.total }
+}
+
+func originKey(_ origin: ProcessOrigin?) -> String {
+    guard let o = origin else { return "unknown" }
+    // JSON encoding avoids delimiter collisions in paths without retaining command lines.
+    return (try? JSONEncoder().encode([o.workingDirectory ?? "", o.repository ?? "", o.remote ?? "", o.transferRemote ?? "", o.operation ?? "", o.ancestors.map { $0.executable }.joined(separator: "\n")]).base64EncodedString()) ?? "unknown"
 }

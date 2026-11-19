@@ -19,7 +19,7 @@ enum Shell {
 }
 final class Sampler {
     let interface: String
-    private var paths: [Int32: String] = [:]
+    private let provenance = ProvenanceCollector()
     init() {
         interface = Parse.wifiDevice(Shell.run("/usr/sbin/networksetup", ["-listallhardwareports"]).text) ?? "en0"
     }
@@ -37,6 +37,10 @@ final class Sampler {
             let n = proc_pidpath(item.pid, &buffer, UInt32(buffer.count))
             let path = n > 0 ? String(cString: buffer) : ""
             data[key]?.executable = path
+            if let identity = ProvenanceCollector.identity(item.pid), identity.executable == path {
+                data[key]?.startedAt = identity.started
+                data[key]?.origin = provenance.capture(identity, at: Date())
+            }
             if let appRange = path.range(of: ".app/Contents/") {
                 let appPath = String(path[..<appRange.lowerBound]) + ".app"
                 let appName = URL(fileURLWithPath: appPath).deletingPathExtension().lastPathComponent
